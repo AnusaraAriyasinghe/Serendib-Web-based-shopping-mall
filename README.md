@@ -1,48 +1,105 @@
-# Shopping Mall — Setup & Team Notes
+# Serendib Central Shopping Mall
 
-SE2030 group project: web-based multi-merchant shopping mall. Java 17, Spring Boot, JSP, Spring Data JPA, MySQL, Maven.
+A web-based, multi-merchant shopping mall: merchants run their own shops, customers browse, buy and review across all of them, and platform employees approve merchants and handle support. Built as a six-person group project for **SE2030 – Software Engineering** at SLIIT (Year 2, Semester 1, 2026).
+
+**Stack:** Java 17 · Spring Boot · Spring Security · Spring Data JPA · JSP/JSTL · MySQL · Maven
+
+> This is my personal copy of our group repository, with the full commit history kept. My own commits are listed below. Everyone else's work is credited to them under [Team and credits](#team-and-credits).
+
+## Features
+
+| Module | What it does |
+|---|---|
+| User & stakeholder management | Customer and merchant registration, merchant approval, role-based login, profiles |
+| Product catalogue | Categories, merchant product listings, browsing and sorting |
+| Shopping cart | Cart per customer, price breakdown with discounts |
+| Order & payment | Checkout across several merchants, per-item order status, payment methods |
+| Feedback & ratings | Product reviews, merchant responses, automatic flagging of low-rated products |
+| Customer support & inquiries | Inquiries tied to an order or product, threaded responses, notifications, FAQ |
+
+The project uses all five design patterns taught in the course: Observer, Strategy, Factory, Singleton and Decorator. See [Docs/design-patterns/](Docs/design-patterns/README.md).
+
+## My contribution
+
+I'm **Anusara Ariyasinghe (Ariyasinghe P.A.D.A.J.)**. I was the team's **Scrum Master**. Besides my own module, I built the frontend and the shared configuration, and I put the six modules together into one application.
+
+### 1. Customer Support & Inquiry module (my assigned module)
+Customers raise inquiries about an order or product. Employees and merchants reply in a thread, and the status moves from `OPEN` to `IN_PROGRESS` to `RESOLVED`. The module also has an FAQ page. It uses the **Observer pattern** to notify the customer, the assigned employee and the merchant when an inquiry changes.
+
+- `src/main/java/com/sliit/se2030/mall/support/`: controllers, entities, repositories, services
+- `src/main/java/com/sliit/se2030/mall/support/observer/`: `InquirySubject`, `InquiryObserver`, `InquiryEventPublisher`, and the customer, employee and merchant notifiers
+- `src/main/webapp/WEB-INF/views/support/`: submit inquiry, my inquiries, the employee and merchant inquiry lists, inquiry thread, FAQ
+- [Docs/design-patterns/01-support-observer.md](Docs/design-patterns/01-support-observer.md)
+
+### 2. Frontend (all modules)
+I designed and built the UI for the whole application, every page in every module.
+
+- `src/main/webapp/WEB-INF/views/`: all JSP views, plus the shared fragments (`common/layout-header.jsp`, `layout-footer.jsp`, `product-tile.jspf`, `price-breakdown.jspf`, `shop-logo.jspf`)
+- `src/main/resources/static/css/serendib.css` and `static/js/serendib.js`: the Serendib theme and its client-side behaviour
+- `src/main/resources/static/images/logos/`: logos for the sample shops
+
+### 3. Shared configuration, security and common code
+- `config/SecurityConfig.java`: role-based access rules, form login, logout, session limits
+- `security/`: `AppUserDetailsService`, `AppUserPrincipal`, `RoleBasedAuthenticationSuccessHandler`
+- `config/DataSeedConfig.java` and `config/SampleCatalogData.java`: seed data for local development
+- `common/`: `BaseEntity`, `GlobalExceptionHandler`, the custom exceptions, `CurrentUserProvider`, and the controller advice classes for the cart badge and admin notifications
+
+### 4. Integration and other features
+- Set up the project structure and the conventions every module follows
+- Merged the team's feature branches and fixed integration bugs: merchant account verification, product delete, product image URLs
+- Added category management and FAQ management
+- Customer profile edit and delete: `user/controller/CustomerProfileController.java`, `user/service/CustomerProfileService.java`, `user/dto/CustomerProfileForm.java`, `views/user/customer-profile.jsp`, `CustomerProfileServiceTest`
+- Applied the design patterns in the other modules together with their owners, and wrote the viva guide in [Docs/design-patterns/](Docs/design-patterns/README.md)
+
+## Team and credits
+
+This is group work. Each module's business logic belongs to the member listed here.
+
+| Member | Role | Module |
+|---|---|---|
+| Bandara N.V. | Product Owner | Product Catalogue Management |
+| **Ariyasinghe P.A.D.A.J.** | **Scrum Master** | **Customer Support & Inquiry**, frontend, shared config |
+| Vaas W.P.S.D. | Developer | Shopping Cart Handling (`cart/`) |
+| Maliduwa M.G.B.B. | Developer | Order & Payment Handling (`order/`) |
+| Weerawickrama K.K. | Developer | Product Review & Rating (`feedback/`) |
+| Neluvinda T.M.D.N. | Developer | Merchant & User Management (`user/`) |
+
+Each member's original submission is kept under [uploads/](uploads/), with their own `NOTES.md`. Some members' work reached `main` through my integration commits, so the commit history doesn't show every contribution. The table above is the actual split of the work.
+
+## Results
+
+- All six modules work end to end against a running MySQL database.
+- `mvn test` runs 31 tests in 8 test classes, and all pass. The tests cover the design-pattern classes (payment strategy factory, cart price decorator, catalogue sort strategy, rating strategy, user factory) as well as the user controller and services.
 
 ## Running locally
 
-1. Prerequisites: JDK 17, a running MySQL server.
-2. Create the database (or let the app do it — the JDBC URL has `createDatabaseIfNotExist=true`):
+**Prerequisites:** JDK 17, Maven 3.9+, and a running MySQL server.
+
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/AnusaraAriyasinghe/Serendib-Web-based-shopping-mall.git
+   cd Serendib-Web-based-shopping-mall
    ```
-   CREATE DATABASE shopping_mall;
+2. Set your MySQL credentials as environment variables. If you don't, the app uses `root` with an empty password.
+   ```bash
+   export DB_USERNAME=root
+   export DB_PASSWORD=your_password
    ```
-3. Check `src/main/resources/application.properties` matches your local MySQL username/password.
-4. Run: `./mvnw spring-boot:run` (Windows: `mvnw.cmd spring-boot:run`) — no local Maven install needed, the wrapper downloads it on first run.
-5. App runs at `http://localhost:8081`. A platform employee account is seeded automatically on first boot: `admin@mall.local` / `admin123` (see `DataSeedConfig`).
+   You don't need to create the database. The app creates `shopping_mall` on first run.
+3. Run the app:
+   ```bash
+   mvn spring-boot:run
+   ```
+4. Open http://localhost:8081. A demo employee account is created on first start, `admin@mall.local` / `admin123`, for local use only.
 
-## Project layout
+Run the tests with `mvn test`.
 
-Package-by-feature under `com.sliit.se2030.mall`: `common/`, `config/`, and `security/` are shared; `user/`, `catalog/`, `cart/`, `order/`, `feedback/`, `support/` are one package per core function, each owned by one team member. Every feature package follows the same shape: `entity/ repository/ service/ controller/ dto/`. Copy that shape for your own module — don't invent a different structure.
+Code layout and team conventions are in [Docs/developer-guide.md](Docs/developer-guide.md).
 
-JSP views live under `src/main/webapp/WEB-INF/views/<feature>/`, matching the same split.
+## Next steps
 
-## Module status
-
-All six modules (`user`, `catalog`, `cart`, `order`, `feedback`, `support`) are implemented and smoke-tested end-to-end against a real running app and MySQL instance — not just code review. `user` is the original reference module; read it first if you want to see the intended pattern (`entity/repository/service/controller/dto`, DTOs never bound directly to entities, ownership checks via `CurrentUserProvider`, CSRF-protected forms, `fieldErrors`/`errorMessage` flash pattern) before touching another module.
-
-A few cross-module design notes worth knowing before you change things:
-- **Order status is per-item, not per-order.** An `Order` can contain items from multiple merchants, so each merchant only ever advances their own `OrderItem.status`; `Order.status` is a computed rollup (see `OrderService.recomputeOrderStatus()`), never set directly.
-- **Checkout deducts stock** and blocks with a `BusinessRuleViolationException` if any cart item exceeds available stock.
-- **Product flagging is recomputed on every review**, in both directions — a product can un-flag itself if its average recovers, not just flag once and stay flagged.
-- **Catalog's product detail page renders review data** (feedback module) and **order detail links out to feedback's review form** — the one place where "later" modules reach back into earlier ones' views, by design.
-
-## Adding a new protected URL
-
-All authentication/authorization lives in **one file**: `config/SecurityConfig.java`. You should not need to touch its `PasswordEncoder` bean, its login/logout setup, or its session settings — those are shared and already working. The only thing you'll ever add is one line to the `authorizeHttpRequests` block, matching your module's URL prefix to the role that should be allowed:
-
-```java
-.requestMatchers("/your-prefix/**").hasRole("CUSTOMER")   // or MERCHANT / PLATFORM_EMPLOYEE
-```
-
-Existing prefixes already covered: `/customer/**`, `/cart/**`, `/checkout/**`, `/orders/**`, `/reviews/submit/**`, `/inquiries/**` → `CUSTOMER`; `/merchant/**` → `MERCHANT`; `/employee/**` → `PLATFORM_EMPLOYEE`. If your module's URLs fall under one of these prefixes already, you don't need to change `SecurityConfig` at all.
-
-To get the currently logged-in user in a controller, add a parameter: `@AuthenticationPrincipal AppUserPrincipal principal` — `principal.getId()` / `principal.getUser()` gives you the real entity. For service-layer code (not a controller), inject `CurrentUserProvider` instead and call `getCurrentUserId()`.
-
-**Ownership rule:** never accept an id that identifies "which record" from client input (a URL path variable, a hidden form field) when the record should belong to the current user. Resolve it from `CurrentUserProvider`/`@AuthenticationPrincipal` instead — see `MerchantProfileService` for the pattern. If a record can legitimately belong to someone else (e.g. an employee approving a merchant by id), accepting the id is fine, but the *permission* to act on it must still come from the role check in `SecurityConfig`, not from trusting the request.
-
-## Tests
-
-`./mvnw test` runs the test suite. See `user/controller/EmployeeMerchantControllerTest` and `user/service/UserRegistrationServiceTest` for the patterns to follow: `@WebMvcTest` + `@WithMockUser` for controllers (fast, no real database), plain Mockito unit tests for services.
+- Commit the Maven wrapper (`.mvn/wrapper/`) so `./mvnw` works without a local Maven install
+- Restrict who can reopen a resolved inquiry (for example, only the assigned employee)
+- Make the Observer notifiers send real email or in-app notifications (right now they only write a log line)
+- Add more tests for the support, cart and order services
+- Deploy a live demo

@@ -8,3 +8,15 @@ target/
 .settings/
 *.log
 .DS_Store
+
+# Secrets and local environment
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.jks
+application-local.properties
+
+# Database dumps
+*.sql.gz
